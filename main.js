@@ -3,6 +3,10 @@ const { ethers } = require("ethers");
 const fs = require("fs");
 const path = require("path");
 const tokens = require("./tokens");
+const axios = require('axios');
+const HttpsProxyAgent = require('https-proxy-agent');
+const proxyAgent = new HttpsProxyAgent('http://127.0.0.1:7890');
+
 const {
   RPC_URL,
   PRIVATE_KEYS,
@@ -11,14 +15,16 @@ const {
   USDT_ADDRESS,
   LOG_FILE,
   FAUCET_ADDRESS,
-  FAUCET_ABI_PATH
+  FAUCET_ABI_PATH,
+  MIN_DELAY,
+  MAX_DELAY
 } = require("./config");
 
 
 // config
 const SLIPPAGE_PERCENT = 5;
-const MIN_DELAY = 0 * 60 * 1000;
-const MAX_DELAY = 1 * 60 * 1000;
+//const MIN_DELAY = 1 * 60 * 1000;
+//const MAX_DELAY = 3 * 60 * 1000;
 
 // setup
 const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
@@ -51,6 +57,41 @@ function logToFile(msg) {
   fs.appendFileSync(LOG_FILE, line);
 }
 
+
+
+async function reportTransaction({ walletAddress, txHash, amount, usdValue, currencyIn, currencyOut }) {
+  const payload = {
+    walletAddress,
+    chainId: 16601,
+    txHash,
+    amount: amount.toString(),
+    usdValue: parseFloat(usdValue),
+    currencyIn,
+    currencyOut,
+    timestamp: Date.now(),
+    timestampFormatted: new Date().toISOString()
+  };
+
+  try {
+    const res = await axios.post("https://trade-gpt-800267618745.herokuapp.com/log/logTransaction", payload, {
+        headers: { "Content-Type": "application/json" },
+        httpsAgent: proxyAgent,
+        timeout: 30000  // 30 秒
+    });
+    console.log(`📬 上报成功 ✅: ${txHash}`);
+  } catch (err) {
+    if (err instanceof AggregateError) {
+      for (const subErr of err.errors) {
+        console.log(`📭 上报失败 ❌ 子错误:`, subErr.message || subErr);
+      }
+    } else if (err.response) {
+      console.log(`📭 上报失败 ❌ HTTP ${err.response.status}:`, err.response.data);
+    } else {
+      console.log(`📭 上报失败 ❌:`, err.message || err);
+    }
+  }
+}
+
 // Claim 函数
 async function claimTokens(wallet) {
   try {
@@ -67,15 +108,24 @@ async function claimTokens(wallet) {
     const receipt = await tx.wait();
     console.log(`[${wallet.address}] ✅ Claim 成功 - 区块: ${receipt.blockNumber}`);
     logToFile(`[${wallet.address}] claimTokens ✅ tx: ${tx.hash}`);
+    return true; // ✅ 成功
   } catch (err) {
-    console.error(`[${wallet.address}] ❌ Claim 失败:`, err.reason || err.message);
-    logToFile(`[${wallet.address}] claimTokens ❌ failed: ${err.reason || err.message}`);
+    const reason = err.reason || err.message;
+    console.error(`[${wallet.address}] ❌ Claim 失败:`, reason);
+    logToFile(`[${wallet.address}] claimTokens ❌ failed: ${reason}`);
+    // ⛔️ 如果是 gas 不足，就不再尝试
+    // if (reason.includes("insufficient funds")) {
+    //   return false;
+    // }
+    // return true; // 非 gas 错误，仍尝试继续
+    return false;
   }
 }
 
+
 // core logic
 async function runSwap(wallet) {
-    console.log('runSwap 开始。。。')
+    //console.log('runSwap 开始。。。')
   const erc20Abi = [
     "function balanceOf(address) view returns (uint256)",
     "function approve(address spender, uint256 amount) returns (bool)"
@@ -104,7 +154,11 @@ async function runSwap(wallet) {
   console.log('balances.length', balances.length)
   if(balances.length == 0){
     console.log(`[${wallet.address}] 💸 没有可估值资产，准备 claim...`);
-  await claimTokens(wallet);
+  const claimed =await claimTokens(wallet);
+  if (!claimed) {
+      console.log(`[${wallet.address}] ⛔️ Claim 因 gas 不足失败，跳过该钱包`);
+      return; // ❌ 不再继续当前钱包
+    }
   // 给链上处理一点时间
   await delay(8000);
   return await runSwap(wallet); // 🌀 重入调用自己，继续 swap
@@ -203,11 +257,22 @@ async function runSwap(wallet) {
     );
 
     const receipt = await tx.wait();
+    console.log(`[${wallet.address}] swapped ${tokenA.symbol} -> ${tokenB.symbol} ✅ tx: ${receipt.transactionHash}, gasUsed: ${receipt.gasUsed.toString()}`)
     logToFile(`[${wallet.address}] swapped ${tokenA.symbol} -> ${tokenB.symbol} ✅ tx: ${receipt.transactionHash}, gasUsed: ${receipt.gasUsed.toString()}`);
+    await reportTransaction({
+        walletAddress: wallet.address,
+        txHash: receipt.transactionHash,
+        amount: ethers.utils.formatUnits(amountInBN, tokenA.decimals),
+        usdValue: parseFloat(ethers.utils.formatUnits(balances[0].valueInUSDT, 18)).toFixed(2), // 估算
+        currencyIn: tokenA.symbol,
+        currencyOut: tokenB.symbol
+    });
+
   } catch (err) {
+    console.log(`[${wallet.address}] swapped ${tokenA.symbol} -> ${tokenB.symbol} ❌ failed: ${err.reason || err.message}`);
     logToFile(`[${wallet.address}] swapped ${tokenA.symbol} -> ${tokenB.symbol} ❌ failed: ${err.reason || err.message}`);
   }
-  console.log('runSwap 结束。。。')
+  //console.log('runSwap 结束。。。')
 }
 
 async function loop() {
@@ -216,8 +281,9 @@ async function loop() {
   while (true) {
     // 🎯 随机选择一个钱包
     const walletIndex = Math.floor(Math.random() * wallets.length)
-    console.log('选择的钱包索引:', walletIndex);
     const wallet = wallets[walletIndex];
+    console.log(`选择的钱包索引: ${walletIndex}, 地址: ${wallet.address}`);
+
 
     try {
       await runSwap(wallet);

@@ -16,6 +16,7 @@ yarn-error.log*
 .env.development
 .env.production
 .env.test
+zjc-to-sy/
 
 # 忽略密钥和凭据
 *.pem

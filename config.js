@@ -8,6 +8,9 @@ module.exports = {
   USDT_ADDRESS: '0xe6c489b6d3eeca451d60cfda4782e9e727490477',
   LOG_FILE: './logs/swap.log',
 
+  MIN_DELAY: 0 * 60 * 1000,  //每次swap间隔时间 最小延迟（毫秒）
+  MAX_DELAY: 2 * 60 * 1000,  //每次swap间隔时间 最大延迟（毫秒）
+
   FAUCET_ADDRESS: "0xdE56D007B41a591C98dC71e896AD0a844356e584", //claim合约地址
   FAUCET_ABI_PATH: "./abi/faucet.json",
     CLAIM_LOOP_INTERVAL_MS: 40 * 60 * 1000,      // 40分钟便利一次钱包
