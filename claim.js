@@ -66,10 +66,19 @@ async function runLoop() {
   while (true) {
     console.log(`\n🚀 [${new Date().toISOString()}] 本轮 claim 开始，共 ${wallets.length} 个钱包`);
 
-    for (const wallet of wallets) {
+    // 本轮复制一份钱包列表并打乱顺序
+    const shuffledWallets = [...wallets];
+    for (let i = shuffledWallets.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledWallets[i], shuffledWallets[j]] = [shuffledWallets[j], shuffledWallets[i]];
+    }
+
+    // 遍历打乱后的列表，每个只处理一次
+    while (shuffledWallets.length > 0) {
+      const wallet = shuffledWallets.pop(); // 随机顺序取出一个钱包
       const success = await checkAndClaim(wallet);
 
-      // ✅ 如果领取成功，延迟 1~2 分钟
+      // 不管成功与否都继续，成功则等待
       if (success) {
         const delay = getRandomDelayMs();
         console.log(`⏳ 等待 ${Math.floor(delay / 1000)} 秒后处理下一个钱包...\n`);

@@ -24,5 +24,5 @@ module.exports = [
   { name: 'TradeWave', symbol: 'TRA', address: '0x570A4D57C5eb6e755a99E346F44DfAb6dCD3919C', decimals: 18 },
   { name: 'Slipless', symbol: 'SLJD', address: '0xfA1bA7E4aD67c1555Bb15CD3d1Ce4523d4D24643', decimals: 18 },
   { name: 'RouteFi', symbol: 'ROYN', address: '0x5f9A7d510D18dA9D00887c5ad60E5dE8Ba435086', decimals: 18 },
-  { name: 'Zia USDT', symbol: 'USDT', address: '0xe6c489b6d3eeca451d60cfda4782e9e727490477', decimals: 6 }
+  { name: 'Zia USDT', symbol: 'USDT', address: '0xe6c489b6d3eeca451d60cfda4782e9e727490477', decimals: 18 }
 ];

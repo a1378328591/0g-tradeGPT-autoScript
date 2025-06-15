@@ -132,21 +132,37 @@ async function runSwap(wallet) {
   ];
 
   const balances = [];
+  //console.log("tokens:", tokens.length,'  ', tokens)
   for (const token of tokens) {
     //console.log('查询'+token.address+'token余额')
     const contract = new ethers.Contract(token.address, erc20Abi, wallet);
     const balance = await contract.balanceOf(wallet.address);
+    
     if (balance.gt(0)) {
-      try {
-        const out = await router.getAmountsOut(balance, [token.address, USDT_ADDRESS]);
+      if (token.address.toLowerCase() === USDT_ADDRESS.toLowerCase()) {
+        // 如果是USDT，不用换算，直接当成valueInUSDT
         balances.push({
           token,
           balance,
-          valueInUSDT: out[1]
+          valueInUSDT: balance  // 直接等于自己
         });
-      } catch {
-        // skip tokens that can't be priced
+        console.log('查询token-' + token.address +'-'+ token.symbol+ '-余额: ' + balance + ' 估值: ' + ethers.utils.formatUnits(balance, 18));
+        //console.log('USDT 余额: ' + balance + ' 估值: ' + ethers.utils.formatUnits(balance, 18)); // USDT是6位精度
+      } else {
+        try {
+          const out = await router.getAmountsOut(balance, [token.address, USDT_ADDRESS]);
+          balances.push({
+            token,
+            balance,
+            valueInUSDT: out[1]
+          });
+          console.log('查询token-' + token.address +'-'+ token.symbol + '-余额: ' + balance + ' 估值: ' + ethers.utils.formatUnits(out[1], 18));
+        } catch {
+          // skip tokens that can't be priced
+        }
       }
+    }else{
+      console.log('查询token-'+token.address +'-'+ token.symbol+'-余额: '+ balance)
     }
   }
 
@@ -154,7 +170,9 @@ async function runSwap(wallet) {
   console.log('balances.length', balances.length)
   if(balances.length == 0){
     console.log(`[${wallet.address}] 💸 没有可估值资产，准备 claim...`);
-  const claimed =await claimTokens(wallet);
+  //const claimed =await claimTokens(wallet);
+  const claimed = false
+  console.log('合约报错，手动跳过')
   if (!claimed) {
       console.log(`[${wallet.address}] ⛔️ Claim 因 gas 不足失败，跳过该钱包`);
       return; // ❌ 不再继续当前钱包
@@ -275,6 +293,55 @@ async function runSwap(wallet) {
   //console.log('runSwap 结束。。。')
 }
 
+async function isAskServiceAvailable(walletAddress) {
+  const payload = {
+    chainId: 16601,
+    user: walletAddress,
+    questions: [{
+      question: "Swap 5 USDT to LOP",
+      answer: "",
+      baseMessage: {
+        lc: 1,
+        type: "constructor",
+        id: ["langchain_core", "messages", "HumanMessage"],
+        kwargs: {
+          content: "Swap 5 USDT to LOP",
+          additional_kwargs: {},
+          response_metadata: {}
+        }
+      },
+      type: null,
+      priceHistorical: null,
+      priceHistoricalData: null,
+      isSynchronized: false,
+      isFallback: false
+    }],
+    testnetOnly: true
+  };
+
+  try {
+    const res = await axios.post("https://trade-gpt-800267618745.herokuapp.com/ask/ask", payload, {
+      headers: { "Content-Type": "application/json" },
+      httpsAgent: proxyAgent,
+      timeout: 10000
+    });
+
+    if (res.status === 200) {
+      console.log(`🟢 页面服务正常，继续 swap`);
+      return true;
+    } else {
+      console.log(`🔴 页面服务异常，状态码: ${res.status}, 延迟约1分钟`);
+      await delay(63000);
+      return false;
+    }
+  } catch (err) {
+    console.log(`🔴 页面服务请求失败, 延迟约1分钟:`, err.message || err);
+    await delay(63000);
+    return false;
+  }
+}
+
+
 async function loop() {
   const wallets = PRIVATE_KEYS.split(",").map(k => new ethers.Wallet(k, provider));
     console.log('检测到钱包数量:', wallets.length);
@@ -286,13 +353,19 @@ async function loop() {
 
 
     try {
-      await runSwap(wallet);
+       const ok = await isAskServiceAvailable(wallet.address);
+        if (!ok) {
+          console.log(`[${wallet.address}] ⛔️ 页面 ask 接口不可用，跳过 swap`);
+          continue; // ❌ 不执行 swap，跳过本轮
+        }
+      //await runSwap(wallet);
     } catch (e) {
       logToFile(`[${wallet.address}] ❌ error: ${e.message}`);
     }
 
     // 🕒 随机等待下一轮
-    const next = getRandomPercent(MIN_DELAY, MAX_DELAY);
+    let next = getRandomPercent(MIN_DELAY, MAX_DELAY);
+    //let = 10 * 1000;
     console.log(`⏱ 下一轮将在 ${(next / 1000 / 60).toFixed(1)} 分钟后...`);
     await delay(next);
   }
