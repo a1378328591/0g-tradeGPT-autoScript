@@ -295,17 +295,18 @@ async function runSwap(wallet) {
 
 async function isAskServiceAvailable(walletAddress) {
   const payload = {
-    chainId: 16601,
-    user: walletAddress,
-    questions: [{
-      question: "Swap 5 USDT to LOP",
+  chainId: 16601,
+  user: walletAddress,
+  questions: [
+    {
+      question: "Swap 5 USDT to MTP",
       answer: "",
       baseMessage: {
         lc: 1,
         type: "constructor",
         id: ["langchain_core", "messages", "HumanMessage"],
         kwargs: {
-          content: "Swap 5 USDT to LOP",
+          content: "Swap 5 USDT to MTP",
           additional_kwargs: {},
           response_metadata: {}
         }
@@ -315,9 +316,11 @@ async function isAskServiceAvailable(walletAddress) {
       priceHistoricalData: null,
       isSynchronized: false,
       isFallback: false
-    }],
-    testnetOnly: true
-  };
+    }
+  ],
+  testnetOnly: true
+};
+
 
   try {
     const res = await axios.post("https://trade-gpt-800267618745.herokuapp.com/ask/ask", payload, {
@@ -326,7 +329,7 @@ async function isAskServiceAvailable(walletAddress) {
       timeout: 10000
     });
 
-    if (res.status === 200) {
+    if (res.status === 200 || res.status === 201) {
       console.log(`🟢 页面服务正常，继续 swap`);
       return true;
     } else {
@@ -358,7 +361,7 @@ async function loop() {
           console.log(`[${wallet.address}] ⛔️ 页面 ask 接口不可用，跳过 swap`);
           continue; // ❌ 不执行 swap，跳过本轮
         }
-      //await runSwap(wallet);
+      await runSwap(wallet);
     } catch (e) {
       logToFile(`[${wallet.address}] ❌ error: ${e.message}`);
     }
