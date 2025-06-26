@@ -1,7 +1,9 @@
 const { ethers } = require("ethers");
 const axios = require("axios");
 const { RPC_URL, PRIVATE_KEYS } = require("./config");
-const HttpsProxyAgent = require("https-proxy-agent");
+const { HttpsProxyAgent } = require('https-proxy-agent');
+const proxyAgent = new HttpsProxyAgent('http://127.0.0.1:7890');
+
 
 // 初始化 provider 和 wallets
 const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
@@ -9,8 +11,6 @@ const wallets = PRIVATE_KEYS.split(",").map((key) => new ethers.Wallet(key, prov
 
 // 延迟函数（5-10 秒之间）
 const delay = (min = 5000, max = 10000) => new Promise(res => setTimeout(res, Math.random() * (max - min) + min));
-
-const proxyAgent = new HttpsProxyAgent("http://127.0.0.1:7890");
 
 // 请求地址和平台列表
 const URL = "https://trade-gpt-800267618745.herokuapp.com/log/logClickAction";

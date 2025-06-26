@@ -3,9 +3,9 @@ const fs = require("fs");
 const path = require("path");
 const { ethers } = require("ethers");
 const { PRIVATE_KEYS, RPC_URL } = require("./config");
-const HttpsProxyAgent = require("https-proxy-agent");
+const { HttpsProxyAgent } = require('https-proxy-agent');
+const proxyAgent = new HttpsProxyAgent('http://127.0.0.1:7890');
 
-const proxyAgent = new HttpsProxyAgent("http://127.0.0.1:7890");
 const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
 const wallets = PRIVATE_KEYS.split(",").map((key) => new ethers.Wallet(key.trim(), provider));
 const walletAddresses = wallets.map((w) => w.address);

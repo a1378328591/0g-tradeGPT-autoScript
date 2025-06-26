@@ -4,8 +4,9 @@ const fs = require("fs");
 const path = require("path");
 const tokens = require("./tokens");
 const axios = require('axios');
-const HttpsProxyAgent = require('https-proxy-agent');
+const { HttpsProxyAgent } = require('https-proxy-agent');
 const proxyAgent = new HttpsProxyAgent('http://127.0.0.1:7890');
+
 
 const {
   RPC_URL,
