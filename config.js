@@ -8,8 +8,8 @@ module.exports = {
   USDT_ADDRESS: '0x217C6f12d186697b16dE9e1ae9F85389B93BdB30',
   LOG_FILE: './logs/swap.log',
 
-  MIN_DELAY: 2 * 60 * 1000,  //每次swap间隔时间 最小延迟（毫秒）
-  MAX_DELAY: 10 * 60 * 1000,  //每次swap间隔时间 最大延迟（毫秒）
+  MIN_DELAY: 5 * 60 * 1000,  //每次swap间隔时间 最小延迟（毫秒）
+  MAX_DELAY: 15 * 60 * 1000,  //每次swap间隔时间 最大延迟（毫秒）
 
   FAUCET_ADDRESS: "0x90DD5F9543Fc4c392f047eA2D3231958D73372dd", //claim合约地址
   FAUCET_ABI_PATH: "./abi/faucet.json",

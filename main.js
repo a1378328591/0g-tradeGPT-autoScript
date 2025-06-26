@@ -146,7 +146,7 @@ async function runSwap(wallet) {
           balance,
           valueInUSDT: balance  // 直接等于自己
         });
-        console.log('查询token-' + token.address +'-'+ token.symbol+ '-余额: ' + balance + ' 估值: ' + ethers.utils.formatUnits(balance, 18));
+        //console.log('查询token-' + token.address +'-'+ token.symbol+ '-余额: ' + balance + ' 估值: ' + ethers.utils.formatUnits(balance, 18));
         //console.log('USDT 余额: ' + balance + ' 估值: ' + ethers.utils.formatUnits(balance, 18)); // USDT是6位精度
       } else {
         try {
@@ -156,13 +156,13 @@ async function runSwap(wallet) {
             balance,
             valueInUSDT: out[1]
           });
-          console.log('查询token-' + token.address +'-'+ token.symbol + '-余额: ' + balance + ' 估值: ' + ethers.utils.formatUnits(out[1], 18));
+          //console.log('查询token-' + token.address +'-'+ token.symbol + '-余额: ' + balance + ' 估值: ' + ethers.utils.formatUnits(out[1], 18));
         } catch {
           // skip tokens that can't be priced
         }
       }
     }else{
-      console.log('查询token-'+token.address +'-'+ token.symbol+'-余额: '+ balance)
+      //console.log('查询token-'+token.address +'-'+ token.symbol+'-余额: '+ balance)
     }
   }
 
@@ -326,7 +326,7 @@ async function isAskServiceAvailable(walletAddress) {
     const res = await axios.post("https://trade-gpt-800267618745.herokuapp.com/ask/ask", payload, {
       headers: { "Content-Type": "application/json" },
       httpsAgent: proxyAgent,
-      timeout: 10000
+      timeout: 20000
     });
 
     if (res.status === 200 || res.status === 201) {
