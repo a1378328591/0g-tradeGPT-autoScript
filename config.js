@@ -11,7 +11,7 @@ module.exports = {
   MIN_DELAY: 5 * 60 * 1000,  //每次swap间隔时间 最小延迟（毫秒）
   MAX_DELAY: 15 * 60 * 1000,  //每次swap间隔时间 最大延迟（毫秒）
 
-  FAUCET_ADDRESS: "0x90DD5F9543Fc4c392f047eA2D3231958D73372dd", //claim合约地址
+  FAUCET_ADDRESS: "0x75d4225b61324EA006582456F3871A6c16e99034", //claim合约地址
   FAUCET_ABI_PATH: "./abi/faucet.json",
     CLAIM_LOOP_INTERVAL_MS: 40 * 60 * 1000,      // 40分钟便利一次钱包
   CLAIM_DELAY_BETWEEN_ACCOUNTS_MS: [60_000, 120_000] // 每个账户间延迟范围(成功后才会延迟)：1~2分钟

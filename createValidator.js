@@ -60,7 +60,8 @@ async function main() {
       commissionRate,
       withdrawalFeeInGwei,
       pubkey,
-      signature
+      signature,
+      { value: stakingValue }
     );
 
     console.log("交易哈希:", tx.hash);
