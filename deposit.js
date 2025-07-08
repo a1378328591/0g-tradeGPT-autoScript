@@ -8,6 +8,9 @@ const {
   DEPOSIT_MIN_SLEEP_MS,
   DEPOSIT_MAX_SLEEP_MS
 } = require("./config");
+const axios = require('axios');
+const { HttpsProxyAgent } = require('https-proxy-agent');
+const proxyAgent = new HttpsProxyAgent('http://127.0.0.1:7890');
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -15,6 +18,37 @@ function sleep(ms) {
 
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+async function reportClickAction(address) {
+  const payload = {
+    clickAction: "liquidityAddedTestnet",
+    socialMediaPlatform: "0gTestnet",
+    walletAddress: address
+  };
+
+  try {
+    const res = await axios.post(
+      "https://trade-gpt-800267618745.herokuapp.com/log/logClickAction",
+      payload,
+      {
+        headers: { "Content-Type": "application/json" },
+        httpsAgent: proxyAgent, // 如无需代理，可去掉该行
+        timeout: 30000
+      }
+    );
+    console.log(`📬 上报成功 ✅: ${address}`);
+  } catch (err) {
+    if (err instanceof AggregateError) {
+      for (const subErr of err.errors) {
+        console.log(`📭 上报失败 ❌ 子错误:`, subErr.message || subErr);
+      }
+    } else if (err.response) {
+      console.log(`📭 上报失败 ❌ HTTP ${err.response.status}:`, err.response.data);
+    } else {
+      console.log(`📭 上报失败 ❌:`, err.message || err);
+    }
+  }
 }
 
 (async () => {
@@ -72,6 +106,8 @@ function getRandomInt(min, max) {
       const depositTx = await stake.deposit(ethers.utils.parseUnits(amount.toString(), decimals));
       await depositTx.wait();
       console.log("质押成功 ✅");
+
+      await reportClickAction(address); // 👈 调用上报方法
 
     } catch (err) {
       console.error(`地址 ${address} 执行失败:`, err.message);
