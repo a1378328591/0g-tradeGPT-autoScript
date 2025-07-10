@@ -43,9 +43,6 @@ function formatTable(data) {
   const headers = [
     "钱包地址",
     "总积分",
-    "Mainnet 积分",
-    "Testnet 积分",
-    "Social 积分",
     "排名",
     "最后更新时间"
   ];
@@ -53,9 +50,6 @@ function formatTable(data) {
   const rows = data.map(r => [
     r.wallet,
     r.totalPoints.toLocaleString(),
-    r.mainnetPoints.toLocaleString(),
-    r.testnetPoints.toLocaleString(),
-    r.socialPoints.toLocaleString(),
     r.rank.toString(),
     r.lastUpdated || "-"
   ]);
