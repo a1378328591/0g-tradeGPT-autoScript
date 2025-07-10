@@ -16,25 +16,27 @@ function delay(ms) {
 
 async function fetchLeaderboardData(walletAddress) {
   try {
-    const url = `https://trade-gpt-800267618745.herokuapp.com/points/leaderboard/${walletAddress}`;
+    const url = `https://trade-gpt-800267618745.herokuapp.com/points/challengeLeaderboard/${walletAddress}`;
     const res = await axios.get(url, { httpsAgent: proxyAgent });
 
-    const data = res.data?.userPointsCurrentSeason;
+    const data = res.data?.userPoints;
     if (!data) throw new Error("无效返回数据");
 
     return {
       wallet: walletAddress,
       totalPoints: data.totalPoints,
-      mainnetPoints: data.mainnetPoints,
-      testnetPoints: data.testnetPoints,
-      socialPoints: data.socialPoints,
+      mainnetPoints: 0, // 新接口没有提供，填默认值
+      testnetPoints: 0, // 新接口没有提供，填默认值
+      socialPoints: 0,  // 新接口没有提供，填默认值
       rank: data.rank,
+      lastUpdated: data.lastUpdatedFormatted,
     };
   } catch (error) {
     console.error(`❌ 获取钱包 ${walletAddress} 的数据失败:`, error.message);
     return null;
   }
 }
+
 
 // 表格格式输出函数
 function formatTable(data) {
@@ -44,7 +46,8 @@ function formatTable(data) {
     "Mainnet 积分",
     "Testnet 积分",
     "Social 积分",
-    "排名"
+    "排名",
+    "最后更新时间"
   ];
 
   const rows = data.map(r => [
@@ -53,7 +56,8 @@ function formatTable(data) {
     r.mainnetPoints.toLocaleString(),
     r.testnetPoints.toLocaleString(),
     r.socialPoints.toLocaleString(),
-    r.rank.toString()
+    r.rank.toString(),
+    r.lastUpdated || "-"
   ]);
 
   // 计算每列最大宽度
