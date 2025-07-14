@@ -6,9 +6,10 @@ const RPC_URL = 'https://evmrpc-testnet.0g.ai';
 const STAKING_CONTRACT = '0xea224dBB52F57752044c0C86aD50930091F561B9';
 
 // ✅ 使用 CLI 工具生成的新 pubkey 和 signature
-const pubkeyHex = '0x8c78c07cda524750793671fc0151bfd281fc80d2581fbd7ec6ca75439f7ad42b8bdb67828cd27f284cf228e24b31484f';
-const signatureHex = '0xb4a685577d74cfa1ea37f631349363ad8595051406d0075d9a5cbd03abe0500948848574b41ebcac8144599b4f13892908900a525140997fe537169dc4f04b869f88025aca546d54e490e569d0948883ba6e49b0b77af05a60c1b88ccd0bc613';
+const pubkeyHex = 'xxxx';
+const signatureHex = 'xxxx';
 
+//之前测试验证者跑不了，因为要质押32个0g代币 
 // 验证者描述信息
 const description = {
   moniker: "qxyl",

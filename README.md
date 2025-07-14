@@ -16,13 +16,13 @@ npm install ethers@5
 cp .env-example .env
 ```
 
-# 启动自动claim脚本（和swap脚本区分开来，独立运行的），config.js里可以配置多久执行一次，增加了简单的随机性
+# 启动自动claim脚本（和swap脚本区分开来，独立运行的），config.js里可以配置多久执行一次，增加了简单的随机性（随机打乱钱包顺序+随机间隔）
 ```
 node claim.js
 ```
 
 # 启动自动swap脚本（里面含简单的claim功能），可以在tokens.js里维护代币合约地址，随机取价值最大的代币的余额*随机% -> 随机token
-# main.js的方法loop()可以修改随机的频率，忘了配在config.js了
+# main.js： 随机swap（随机钱包+随机间隔+随机百分比金额+随机交易对），每次成功后都会调用官方的log事件（官方根据这个来统计分数的，第一周的任务测试过）
 ```
 node main.js
 ```
@@ -33,3 +33,12 @@ node main.js
 node cancelPendingTx.js
 ```
 
+# 查看排名，输出到logs/rank.txt里（简单的列表展示：钱包 积分 排名 更新时间）
+```
+node rank_query.js
+```
+
+# deposit: 随机钱包+随机间隔  执行完就自动停止脚本，没做轮训
+```
+node rank_query.js
+```
